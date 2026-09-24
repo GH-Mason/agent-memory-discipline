@@ -9,15 +9,28 @@ Usage:
     python3 memory-audit.py MEMORY.md
     python3 memory-audit.py MEMORY.md --limit 4000 --threshold 75 --target 65
     python3 memory-audit.py MEMORY.md --protect "never email" --quiet
+    python3 memory-audit.py MEMORY.md --protect-file protect-list.txt
     python3 memory-audit.py MEMORY.md --json
 
 Exit codes:
     0  report produced (regardless of occupancy)
     2  usage or file error
 
+Protection, two channels (either one exempts an entry from all candidate lists):
+    --protect / --protect-file  substring patterns; --protect-file reads one
+                                pattern per line (blank lines and # comments
+                                ignored) so the list can live in your cleanup
+                                procedure as a single source
+    in-entry tag                an entry containing the literal tag "#protect"
+                                is always protected — protection travels with
+                                the entry and survives rewording
+
 Char counting: characters across entries, separator lines and surrounding
 whitespace excluded. Host platforms may count slightly differently — tune
---limit until this tool's percentage matches what your platform reports.
+--limit until this tool's percentage matches what your platform reports. Note
+that platforms meter in *tokens*, not characters: for English text the ratio
+is roughly 4 chars/token, for CJK roughly 1–1.5 chars/token, so translate your
+platform's token budget into characters before setting --limit.
 """
 from __future__ import annotations
 
@@ -34,6 +47,11 @@ DEFAULT_TARGET = 65.0
 DEFAULT_MAX_ENTRY_CHARS = 400
 DEFAULT_DUP_OVERLAP = 0.5
 DEFAULT_TOP = 10
+
+# An entry containing this literal tag is always protected, regardless of
+# --protect patterns. Protection then travels with the entry and survives
+# rewording — substring patterns break silently when an entry is edited.
+PROTECT_TAG = "#protect"
 
 _WORD = re.compile(r"[0-9A-Za-z_]{2,}")
 _CJK = re.compile(r"[\u4e00-\u9fff]+")
@@ -92,7 +110,7 @@ def build_report(path: Path, entries: list[str], found: bool, args: argparse.Nam
     protect_norms = [p.lower() for p in args.protect]
     protected = {
         i for i, e in enumerate(entries, 1)
-        if any(p in e.lower() for p in protect_norms)
+        if PROTECT_TAG in e or any(p in e.lower() for p in protect_norms)
     }
 
     longs = [
@@ -167,7 +185,7 @@ def render_text(rep: dict, quiet: bool) -> str:
     else:
         out.append(f"threshold  {rep['threshold_pct']}%  →  below — no action needed")
     if rep["protected_count"]:
-        out.append(f"protected  {rep['protected_count']} entr(y/ies) matched --protect")
+        out.append(f"protected  {rep['protected_count']} entr(y/ies) excluded (--protect / --protect-file / #protect tag)")
     if not rep["separator_found"]:
         out.append("note       no separator lines found — file treated as one entry")
 
@@ -208,6 +226,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help=f"line that separates entries (default {DEFAULT_SEPARATOR!r})")
     p.add_argument("--protect", action="append", default=[],
                    help="substring marking an entry as never-touch (repeatable)")
+    p.add_argument("--protect-file",
+                   help="file with one protect pattern per line (blank lines and "
+                        "# comments ignored); keep it in your cleanup procedure so "
+                        "the list has a single source")
     p.add_argument("--max-entry-chars", type=int, default=DEFAULT_MAX_ENTRY_CHARS,
                    help=f"flag entries longer than this (default {DEFAULT_MAX_ENTRY_CHARS})")
     p.add_argument("--dup-overlap", type=float, default=DEFAULT_DUP_OVERLAP,
@@ -231,6 +253,19 @@ def main(argv: list[str] | None = None) -> int:
     except OSError as exc:
         print(f"memory-audit: cannot read {path}: {exc}", file=sys.stderr)
         return 2
+
+    if args.protect_file:
+        pfile = Path(args.protect_file).expanduser()
+        try:
+            lines = pfile.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            print(f"memory-audit: cannot read protect-file {pfile}: {exc}",
+                  file=sys.stderr)
+            return 2
+        args.protect += [
+            line.strip() for line in lines
+            if line.strip() and not line.strip().startswith("#")
+        ]
 
     entries, found = split_entries(text, args.separator)
     rep = build_report(path, entries, found, args)

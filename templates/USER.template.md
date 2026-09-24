@@ -4,7 +4,8 @@
 > never write it. A deleted preference is something the user will rarely
 > re-state, so the deletion is usually permanent in practice.
 >
-> Suggested budget: ~2,000 characters. Keep entries stable, specific, and
+> Suggested budget: see docs/operations.md §1 (single source for all numbers).
+> Keep entries stable, specific, and
 > phrased as facts about the user — not as instructions to the agent.
 
 <!-- ── identity ──────────────────────────────────────────────────────── -->

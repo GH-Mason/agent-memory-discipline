@@ -2,7 +2,7 @@
 
 The rules are framework-agnostic; only the **installation points** differ. There are always two:
 
-1. **The injected layer** — whatever your agent reads *every turn* (system prompt, rules file loaded at session start). The four always-on rules go here.
+1. **The injected layer** — whatever your agent reads *every turn* (system prompt, rules file loaded at session start). The five always-on rules go here.
 2. **The memory store** — a file (or files) the agent can read and write. The *content* goes here.
 
 Plus, if you automate cleanup:
@@ -63,14 +63,21 @@ Copy [`templates/injected-rules.md`](../templates/injected-rules.md) into your i
 
 Start at the small end. Grow only if the level is *consistently* pressed against the ceiling at target occupancy — and even then, prefer merging entries over enlarging the budget. See [operations.md](operations.md) §4.
 
-## Wiring the audit script
+## Wiring the scripts
 
 `scripts/memory-audit.py` is a read-only reporter (pure stdlib, no dependencies):
 
 ```bash
 python3 scripts/memory-audit.py ~/path/to/MEMORY.md --limit 4000
-python3 scripts/memory-audit.py ~/path/to/MEMORY.md --protect "never email" --quiet   # cron-safe
-python3 scripts/memory-audit.py ~/path/to/MEMORY.md --json                            # machine-readable
+python3 scripts/memory-audit.py ~/path/to/MEMORY.md --protect-file protect-list.txt --quiet   # cron-safe
+python3 scripts/memory-audit.py ~/path/to/MEMORY.md --json                                     # machine-readable
 ```
 
-Use it as the *measurement* step. The decision step — what to merge, compress, or keep — stays with an LLM following [templates/cleanup-checklist.md](../templates/cleanup-checklist.md). A scoring script can rank entries; it cannot tell a load-bearing rule from a stale note, and that distinction is the whole game.
+Keep the protect-list in one file (one pattern per line, `#` comments allowed) and point `--protect-file` at it — the list then has a single source instead of drifting across cron commands. Entries that must survive rewording can carry the in-entry tag `#protect`, which the audit always honours.
+
+Two companions close the loop:
+
+- `scripts/cleanup-preflight.py` — run it as the **first step of every cleanup job**. It fails loudly if the procedure file is missing/truncated or the job's skill attachment is empty (docs/failure-modes.md explains why this must be code, not documentation).
+- `scripts/memory-verify.py` — snapshot before an edit, then verify after: declared removals gone, declared additions present, and *nothing else* changed. This automates step 6 of the write flow.
+
+Use the audit as the *measurement* step. The decision step — what to merge, compress, or keep — stays with an LLM following [templates/cleanup-checklist.md](../templates/cleanup-checklist.md). A scoring script can rank entries; it cannot tell a load-bearing rule from a stale note, and that distinction is the whole game.

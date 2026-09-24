@@ -4,7 +4,9 @@ The human-readable procedure. Run in order; the order matters (verify before des
 
 ## Before touching anything
 
-- [ ] Read the **protect-list** from the procedure (do not work from memory of it)
+- [ ] Run `scripts/cleanup-preflight.py` against this procedure (and the job config, if the run is scheduled). **If it fails, stop** — a missing or truncated procedure is a stop condition, not a licence to improvise
+- [ ] **Snapshot the store** (timestamped copy, or a git commit if the memory directory is versioned). No snapshot, no destructive run
+- [ ] Read the **protect-list** from the procedure (do not work from memory of it); feed it to the audit with `--protect-file` so the list has one source
 - [ ] Confirm scope: working memory only — **user profile is out of scope**
 - [ ] Read current occupancy; if below the trigger threshold → stop, done
 - [ ] Locate the report path so the run can be logged even if nothing is changed
@@ -27,8 +29,9 @@ The human-readable procedure. Run in order; the order matters (verify before des
 
 ## After
 
-- [ ] Verify a sample of edits: old entries gone, new entries present, no duplicate pairs
-- [ ] Write the run log: occupancy before/after; entries removed / replaced / merged; flagged items
+- [ ] Verify the edits mechanically: `scripts/memory-verify.py <snapshot> <store>` with the intended removals/additions declared — it fails if anything *else* changed
+- [ ] Verify a sample of edits by eye: old entries gone, new entries present, no duplicate pairs
+- [ ] Write the run log: occupancy before/after; entries removed / replaced / merged; flagged items; snapshot path
 - [ ] If anything was deleted: one-line description per deletion, in the report
 - [ ] Stay silent on the messaging channel unless something needs a human decision
 

@@ -9,8 +9,9 @@ Read and apply before every write to memory.
    → don't store (use session history).
 3. **Filter for the stable, not the recent.** Before writing, ask: *if this
    vanished, would rediscovering it cost real work?* If no, don't store it.
-4. **Budget is fixed.** Keep occupancy in the 60–70% band; compact above ~75%
-   toward ~65%. Never enlarge the budget to absorb growth.
+4. **Budget is fixed.** Keep occupancy in the recommended band; compact at the
+   canonical threshold toward the canonical target (values: docs/operations.md
+   §1–2 — do not restate them here). Never enlarge the budget to absorb growth.
 5. **Long-form lives in files.** Memory keeps a pointer, never the full text.
 
 After each write, verify: old entry gone, new entry present, exactly one
