@@ -59,9 +59,10 @@ rediscovering it cost real work?* "No" = the filter firing.
 ## Rule 4 — Adaptive capacity: fixed budget, periodic compaction
 
 - budget is fixed; compress and merge — **never enlarge to absorb growth**
-- operate in the high-signal band (~60–70% observed)
+- operate in the high-signal band (canonical values: `docs/operations.md` §2)
 - scheduled audit; silent when nothing to do; report on disk every run
-- compact above ~75% toward ~65% (headroom for the next day's writes)
+- compact at the trigger threshold toward the target (canonical values:
+  `docs/operations.md` §1 and §4; the headroom covers the next day's writes)
 
 ## Rule 5 — Redundancy: the file is the source of truth
 

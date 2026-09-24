@@ -51,6 +51,9 @@ with the protect-list applied.
 # protect an entry from being flagged at all
 python3 scripts/memory-audit.py examples/example-memory.md --protect "never send an email"
 
+# same, but with the list in a file — one pattern per line, single source
+python3 scripts/memory-audit.py examples/example-memory.md --protect-file protect-list.txt
+
 # cron-style: prints only when the threshold is crossed
 python3 scripts/memory-audit.py examples/example-memory.md --quiet
 
@@ -61,6 +64,11 @@ python3 scripts/memory-audit.py examples/example-memory.md --limit 2500 --quiet
 python3 scripts/memory-audit.py examples/example-memory.md --json
 ```
 
+An entry can also protect *itself*: any entry containing the literal tag
+`#protect` is exempt from every candidate list, no patterns needed. Prefer the
+tag for rules whose wording may evolve — a substring pattern silently stops
+matching when the entry is edited; the tag travels with the entry.
+
 ## Using it in your own setup
 
 - Point it at *your* store and set `--limit` to your budget. Count semantics:
@@ -69,5 +77,6 @@ python3 scripts/memory-audit.py examples/example-memory.md --json
   the tool's percentage matches what the platform reports.
 - Keep it read-only on the delete decision. `memory-audit.py` never edits the
   file; that is by design, not a missing feature.
-- Add your protect-list patterns as `--protect` arguments so they never enter
-  the candidate lists at all.
+- Keep your protect-list in one file and pass it with `--protect-file` (or tag
+  the entries themselves with `#protect`) so protected entries never enter the
+  candidate lists at all.

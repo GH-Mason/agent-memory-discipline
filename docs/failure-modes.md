@@ -63,11 +63,11 @@ Anti-patterns we have actually committed, plus a postmortem of the one that chan
 
 ### Fixes applied
 
-1. **Reattach + fail-safe:** the job must run with its procedure skill; the updated design treats a missing skill as a stop condition, not a licence to improvise.
-2. **Thresholds live in one place** (the procedure); the job prompt no longer restates them.
+1. **Reattach + fail-safe:** the job must run with its procedure skill; the updated design treats a missing skill as a stop condition, not a licence to improvise. Made executable in [`scripts/cleanup-preflight.py`](../scripts/cleanup-preflight.py): the job starts by proving its procedure exists, is intact, and (when a config is supplied) has a non-empty skill attachment — failure is loud and the run stops.
+2. **Thresholds live in one place** ([operations.md](operations.md) §1–4); the job prompt no longer restates them. Every other document references the canonical values instead of copying them — this repo itself now follows that rule.
 3. **The copy-as-redundancy justification is explicitly banned** in the procedure, with the reasoning written down (A3 above) — because the counter-argument sounds plausible every time it comes up.
-4. **A protect-list that is re-read each run**, plus "flag for review" as the default action under uncertainty.
-5. **The audit is not silent about itself:** every run writes a report to disk. The *delivery* stays silent when clean; the *record* never is.
+4. **A protect-list that is re-read each run**, plus "flag for review" as the default action under uncertainty. The list is fed to the audit from a single file (`--protect-file`), and entries that must survive rewording carry an in-entry `#protect` tag.
+5. **The audit is not silent about itself:** every run writes a report to disk, and a snapshot of the store is taken before any destructive run. The *delivery* stays silent when clean; the *record* never is.
 
 ### Lessons that generalise
 

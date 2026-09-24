@@ -4,7 +4,8 @@
 > containing a single `§` (pick your own separator; keep it unambiguous and
 > never let it occur inside an entry). One entry = one topic.
 >
-> Suggested budget: ~4,000 characters. Operate at 60–70% occupancy.
+> Suggested budget and occupancy band: see docs/operations.md §1–2 (the single
+> source for all numbers — do not restate them here).
 
 <!-- ── entry 1: environment fact ─────────────────────────────────────── -->
 <One environment fact or convention. State it as a fact, not an instruction.

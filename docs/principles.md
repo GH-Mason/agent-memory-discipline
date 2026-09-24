@@ -86,9 +86,9 @@ Getting this wrong in either direction is expensive: a procedure in the facts la
 **Design decisions.**
 
 - **Budget is fixed.** Compress and merge; never enlarge the budget to absorb growth. Enlarging treats the symptom and dilutes recall.
-- **Operate in the high-signal band.** Our observed sweet spot is ~60–70% occupancy. Below that you are under-using; above it, entry quality collapses because merging pressure forces bad compromises.
+- **Operate in the high-signal band.** Below it you are under-using; above it, entry quality collapses because merging pressure forces bad compromises. The canonical band is defined in [operations.md](operations.md) §2 — do not restate it here.
 - **Audit on a schedule.** The audit produces a human-readable report and **stays silent when there's nothing to do** — noise from the maintenance system is still noise.
-- **Compaction thresholds.** Trigger above ~75%; compress toward ~65%. The 10-point headroom is for the next day's legitimate writes.
+- **Compaction thresholds.** Trigger and target are defined once, in [operations.md](operations.md) §1 and §4. The headroom between them is for the next day's legitimate writes.
 
 **Who decides what to delete.** Compression decisions need semantic judgment ("is this a high-frequency reference or a historical detail?"), so the audit should be LLM-driven with an explicit procedure — not a heuristic script unattended. Heuristics score; they don't understand load-bearing rules. (Ours did not. See [failure-modes.md](failure-modes.md).)
 
@@ -112,8 +112,8 @@ These are not principles; they are verifications applied *while operating*, catc
 
 ### A. Convergence — no oscillation
 
-- After every rewrite: verify state (old gone / new present). A "success" return from the write call is necessary but not sufficient if the match was ambiguous.
-- **Same topic corrected twice** ⇒ the first fix didn't take root. Root-cause it immediately: ambiguous match? wrong store? conflicting duplicate left behind? Fix all of it in one pass.
+- After every rewrite: verify state (old gone / new present). A "success" return from the write call is necessary but not sufficient if the match was ambiguous. Mechanically: snapshot before the edit, run `scripts/memory-verify.py` on the before/after pair.
+- **Same topic corrected twice** ⇒ the first fix didn't take root. Root-cause it immediately: ambiguous match? wrong store? conflicting duplicate left behind? Fix all of it in one pass. This check is only executable if corrections are recorded — keep a one-line-per-correction ledger, or the second correction is invisible (see [operations.md](operations.md) §3).
 - **Divergence signal:** one fact appearing in ≥2 entries (including near-duplicates) = the system is diverging; merge and delete the surplus now.
 
 ### B. Debounce — second occurrence before commitment

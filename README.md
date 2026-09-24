@@ -72,9 +72,9 @@ Ask before every write: *if this vanished, would it actually cost me something?*
 > *Engineering Cybernetics* (self-optimising & adaptive control): the system measures itself and corrects toward a better operating point — within its constraints.
 
 - Set an explicit character budget. **Do not enlarge it to solve growth.** Compress and merge instead.
-- Keep occupancy in the high-signal band (~60–70% in our experience); a roomy memory dilutes recall.
+- Keep occupancy in the high-signal band; a roomy memory dilutes recall.
 - Run an automated audit on a schedule; a human-readable report each time; silent when nothing needs doing.
-- Thresholds: compact when usage exceeds ~75%, down to ~65% — leave headroom for the next day's writes.
+- Compact when usage crosses the trigger threshold, down to the target — leaving headroom for the next day's writes. Canonical numbers live in [docs/operations.md](docs/operations.md) §1–4 and nowhere else.
 
 ### 5. Redundancy — the file is the source of truth
 
@@ -115,6 +115,9 @@ templates/
   cleanup-checklist.md     the human-readable audit checklist
 scripts/
   memory-audit.py          occupancy + review-candidate report (stdlib, read-only)
+  cleanup-preflight.py     fail-safe: procedure/skill intact before a cleanup run
+  memory-verify.py         verify an edit: expected changes landed, nothing else moved
+  check-example.py         docs-as-test: documented output == real output
 examples/
   example-memory.md        synthetic sample store
   README.md                sample audit run + what the flags mean
@@ -130,7 +133,8 @@ The two `skills/` files are in Hermes skill format; the rules themselves are age
 1. Find your two install points and follow your framework's recipe in [docs/porting.md](docs/porting.md) — Claude Code, Codex, Cursor, or generic.
 2. Paste [templates/injected-rules.md](templates/injected-rules.md) into the layer your agent sees every turn. Rules that aren't injected aren't applied.
 3. Copy the two store templates and set a character budget; check occupancy with `python3 scripts/memory-audit.py <your>/MEMORY.md` — sample run in [examples/](examples/README.md).
-4. Wire the cleanup loop (nightly or weekly) — with the guardrails in [docs/operations.md](docs/operations.md), not without — and log what it deletes for the first month.
+4. Wire the cleanup loop (nightly or weekly) — with the guardrails in [docs/operations.md](docs/operations.md), not without — and log what it deletes for the first month. Every run starts with `scripts/cleanup-preflight.py` and snapshots the store before touching it.
+5. Run the four [failure drills](docs/operations.md#7-failure-drills-cheap-do-them-once) once. They are cheap, and they are the only way to know your guardrails actually hold — especially the protect-list drill, which replays the incident.
 
 ## Status & claim ceiling
 
@@ -140,6 +144,10 @@ This is **n = 1 field notes**, not a controlled study:
 - the "60–70% density" figure is *observed practice*, not a measured law
 - the failure incident is reported as it happened, not as an experiment
 - treat the numbers as *starting points to tune*, not defaults to trust
+
+## Related work
+
+Architecture-first projects — [MemGPT/Letta](https://github.com/letta-ai/letta), [Mem0](https://github.com/mem0ai/mem0), [Zep](https://github.com/getzep/zep) — build the *store*: retrieval, compaction, memory tiers. This repo is the complement, not a competitor: it is the **operating discipline** for whatever store you already have — what may be written, how corrections land, and how cleanup runs without silently deleting the rules that protect it. If your memory lives in one of those systems, these rules still apply to the layer that writes into it.
 
 ## Sources
 

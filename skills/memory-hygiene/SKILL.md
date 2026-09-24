@@ -19,8 +19,9 @@ the periodic compaction loop.
 1. **Memory is a scarce resource, not a free notebook.** Each write occupies
    budget; nothing is auto-reclaimed. A new entry usually means compressing an
    old one — not extending the file.
-2. **Density effect.** Recall quality is best around 60–70% occupancy
-   (observed practice, not a measured law). **Do not enlarge the budget**;
+2. **Density effect.** Recall quality is best in a high-signal band around
+   two-thirds occupancy (observed practice, not a measured law; canonical
+   band: `docs/operations.md` §2). **Do not enlarge the budget**;
    optimise signal-to-noise instead.
 3. **The early phase looks alarming and is normal.** Rapid growth during
    adoption (building the scaffolding) does not justify a bigger budget or
@@ -32,17 +33,20 @@ the periodic compaction loop.
 
 ## Budgets
 
-| File | Budget | Maintained by |
-|---|---|---|
-| Working memory | ~4,000 chars | automated + manual |
-| User profile | ~2,000 chars | **manual only** |
-| Note files | unbounded | archive; never injected |
+Canonical values: `docs/operations.md` §1 (single source — do not restate
+numbers here; duplicated configuration drifts).
+
+| File | Maintained by |
+|---|---|
+| Working memory | automated + manual |
+| User profile | **manual only** |
+| Note files | archive; never injected |
 
 ## The cleanup loop
 
-- **Threshold:** compact when occupancy exceeds ~75%. (Not 80%; not 90%. The
-  extra headroom covers legitimate writes before the next audit.)
-- **Target:** compress to ~65%, leaving a 10-point buffer.
+- **Threshold/target:** canonical values live in `docs/operations.md` §1 and
+  §4. The headroom between trigger and target covers legitimate writes before
+  the next audit.
 - **Timing:** a slot away from user-facing activity; never racing a live
   conversation's writes.
 - **Mode:** LLM-driven with a written procedure — sentiment-free heuristics
@@ -60,8 +64,9 @@ the periodic compaction loop.
 - **"A copy exists elsewhere" is never a deletion justification.** The
   injected layer and the on-demand layer play different roles; a copy in a
   doc does not cover the injected role.
-- Threshold/target values live **in this procedure only** — never restated in
-  the job prompt (duplicated configuration drifts).
+- Threshold/target values have **one source** (`docs/operations.md` §1–4) —
+  never restated in the job prompt or copied into other files (duplicated
+  configuration drifts).
 - Every run writes a **report to disk**, even when nothing is deleted.
 - Under uncertainty: **flag for review** — a skipped delete costs nothing; a
   wrong delete is silent and usually irreversible.
@@ -81,7 +86,7 @@ the periodic compaction loop.
 - **Do not delete a rule because "the skill has a copy."** The skill is read
   on demand; the injected entry is seen every turn. Deleting the injection
   while keeping the copy changes behaviour for the worse — see
-  `docs/failure-modes.md` in the agent-memory-method repository.
+  `docs/failure-modes.md` in the agent-memory-discipline repository.
 - **Do not expand capacity to solve a capacity signal.**
 - **Do not fix at 99%.** The buffer exists precisely so the audit is never an
   emergency.

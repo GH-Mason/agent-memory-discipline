@@ -72,9 +72,9 @@ agent 的长期记忆是一笔**只有流入、没有自然流出的存量**。�
 > 工程控制论（自寻最优、自适应控制）：系统测量自身，在约束内向更优工作点修正。
 
 - 定明确的字符预算。**不要靠扩容解决增长**——压缩、合并。
-- 占用率保持在高信号区间（我们的经验是约 60–70%）；太宽松的记忆会稀释召回。
+- 占用率保持在高信号区间；太宽松的记忆会稀释召回。
 - 按周期跑自动巡检；每次产出人可读报告；无事发生时静默。
-- 阈值：占用超过约 75% 时压缩到约 65%——给第二天的写入留余量。
+- 占用越过触发阈值时向目标值压缩——给第二天的写入留余量。规范数字只维护在 [docs/operations.md](docs/operations.md) §1–4 一处。
 
 ### 五、冗余——文件是真相源
 
@@ -115,6 +115,9 @@ templates/
   cleanup-checklist.md     人可读的巡检清单
 scripts/
   memory-audit.py          占用率 + 候选清单报告（纯 stdlib，只读）
+  cleanup-preflight.py     故障保险：清理运行前检查 procedure/skill 完好
+  memory-verify.py         验证一次编辑：预期改动落实、无其他变动
+  check-example.py         文档即测试：文档引用输出 == 真实输出
 examples/
   example-memory.md        合成样例存储
   README.md                样例审计输出 + 各标记含义
@@ -130,7 +133,8 @@ skills/
 1. 先找到你的两个安装点，照 [docs/porting.md](docs/porting.md) 里对应框架的配方走（Claude Code / Codex / Cursor / 通用）。
 2. 把 [templates/injected-rules.md](templates/injected-rules.md) 粘进 agent 每轮都能看到的层。没被注入的规则等于没有。
 3. 复制两个 store 模板、设定字符预算，用 `python3 scripts/memory-audit.py <你的>/MEMORY.md` 看占用——示例输出见 [examples/](examples/README.md)。
-4. 排上清理回路（每晚或每周）——但必须带上 [docs/operations.md](docs/operations.md) 里的护栏；头一个月记录每次删了什么。
+4. 排上清理回路（每晚或每周）——但必须带上 [docs/operations.md](docs/operations.md) 里的护栏；头一个月记录每次删了什么。每次运行先跑 `scripts/cleanup-preflight.py`，并在动手前给 store 做快照。
+5. 把四个[失效演练](docs/operations.md)各跑一次。成本很低，而且这是唯一能证明护栏真实有效的办法——尤其是 protect-list 演练，它就是事故的现场复现。
 
 ## 状态与结论上限
 
@@ -140,6 +144,10 @@ skills/
 - "60–70% 密度"是**经验观察**，不是实测定律
 - 事故按实际发生记录，不是实验设计
 - 把里面的数字当**待调的起点**，别当默认值信
+
+## 相关项目
+
+架构优先的项目——[MemGPT/Letta](https://github.com/letta-ai/letta)、[Mem0](https://github.com/mem0ai/mem0)、[Zep](https://github.com/getzep/zep)——解决的是**存储**本身：检索、压缩、分层。本仓库是互补而非竞争：它是你**任何存储之上**的**运行纪律**——什么该写、纠正怎么落、清理怎么跑而不至于悄悄删掉保护它的规则。即使你的记忆跑在这些系统里，这套规则依然作用于写入那一层。
 
 ## 来源
 
